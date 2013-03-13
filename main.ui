@@ -56,9 +56,13 @@ margin-right: 3px;</string>
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">background-color: rgba(32, 255, 8, 95);
-margin-bottom: 3px;
-</string>
+      <string notr="true">QWidget {
+	background-color: rgba(32, 255, 8, 95);
+	margin-bottom: 3px;
+}
+QWidget:hover{
+	background-color: rgba(32, 8, 255, 95);
+}</string>
      </property>
     </widget>
    </item>
