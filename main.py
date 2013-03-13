@@ -62,7 +62,7 @@ class Window(QtGui.QDialog, FormClass):
             elif self.drag_widget_name == 'topRightGrip':
                 rect.adjust(0, delta.y(), delta.x(), 0)
             elif self.drag_widget_name == 'rightGrip':
-                rect.adjust(0, 0, delta.x(), delta.y())
+                rect.adjust(0, 0, delta.x(), 0)
             elif self.drag_widget_name == 'bottomRightGrip':
                 rect.adjust(0, 0, delta.x(), delta.y())
             elif self.drag_widget_name == 'bottomGrip':
