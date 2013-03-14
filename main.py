@@ -12,6 +12,8 @@ if sys.version < python_required_version:
 import os
 
 from PyQt4 import QtGui, QtCore, uic
+from PyKDE4.kdeui import KApplication, KNotification
+from PyKDE4.kdecore import ki18n, KAboutData, KCmdLineArgs
 
 import pexpect
 
@@ -34,9 +36,9 @@ class Window(QtGui.QDialog, FormClass):
 
         screen = QtGui.QApplication.desktop().screenGeometry()
         rect = screen.adjusted(screen.width() / 4, screen.height() / 4,
-                               -screen.width() / 4, -screen.height() / 4)
+                               - screen.width() / 4, -screen.height() / 4)
         self.setGeometry(rect)
-        
+
         self.recorder = None
         self.timer = QtCore.QTimer(self)
         self.timer.setInterval(1000)  # once per second
@@ -121,9 +123,9 @@ class Window(QtGui.QDialog, FormClass):
             i += 1
         cmd = ('avconv -f x11grab -r 15 -s %dx%d -i :0.0+%d,%d -c:v libx264 -preset ultrafast '
                '-crf 0 %s') % (rect.width(), rect.height(), rect.left(), rect.top(), filename)
-        print(cmd)
         self.recorder = pexpect.spawn(cmd)
         self.timer.start()
+        KNotification.event(KNotification.Notification, 'ShowView', 'Screen recording started')
 
     def check_recording_status(self):
         if not self.recorder.isalive():
@@ -137,25 +139,40 @@ class Window(QtGui.QDialog, FormClass):
             self.timer.stop()
 #            print(self.recorder.read_nonblocking(1000, 0))
             self.recorder.terminate(force=True)
-            print(self.recorder.read())
+            KNotification.event(KNotification.Notification, self.recorder.read())
 
     def closeEvent(self, qCloseEvent):
         print('close event')
         self.stop_recording()
-    
+
     def resizeEvent(self, qResizeEvent):
         # TODO: show new dimensions to user
         super().resizeEvent(qResizeEvent)
-        
+
     def moveEvent(self, qResizeEvent):
         # show new position to user
         super().moveEvent(qResizeEvent)
-        
-
 
 
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
+
+    appName = "ViewShow"
+    catalog = ""
+    programName = ki18n("KApplication")
+    version = "0.1"
+    description = ki18n("KDE screen recorder")
+    license = KAboutData.License_GPL
+    copyright = ki18n("(c) 2013 Victor Varvariuc")
+    text = ki18n("none")
+    homePage = "https://github.com/warvariuc/viewshow"
+    bugEmail = "victor.varvariuc@gmail.com"
+
+    aboutData = KAboutData(appName, catalog, programName, version, description,
+                           license, copyright, text, homePage, bugEmail)
+
+    KCmdLineArgs.init(sys.argv, aboutData)
+
+    app = KApplication()
 
     window = Window()
     window.show()
