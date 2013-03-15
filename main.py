@@ -12,16 +12,30 @@ if sys.version < python_required_version:
 import os
 
 from PyQt4 import QtGui, QtCore, uic
-from PyKDE4.kdeui import KApplication, KNotification
+from PyKDE4.kdeui import KApplication, KStatusNotifierItem, KNotification
 from PyKDE4.kdecore import ki18n, KAboutData, KCmdLineArgs
 
 import pexpect
 
 
 QtCore.pyqtRemoveInputHook()
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 FormClass, BaseClass = uic.loadUiType('main.ui')
 assert BaseClass is QtGui.QDialog
+
+
+def keep_rect_within_screen_bounds(rect):
+    assert isinstance(rect, QtCore.QRect)
+    screen = QtGui.QApplication.desktop().screenGeometry()
+    if rect.top() < screen.top():
+        rect.moveTop(screen.top())
+    if rect.right() > screen.right():
+        rect.moveRight(screen.right())
+    if rect.bottom() > screen.bottom():
+        rect.moveBottom(screen.bottom())
+    if rect.left() < screen.left():
+        rect.moveLeft(screen.left())
 
 
 class Window(QtGui.QDialog, FormClass):
@@ -30,13 +44,21 @@ class Window(QtGui.QDialog, FormClass):
         super().__init__()
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
-#        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
         self.setupUi(self)
 
+        # http://api.kde.org/4.x-api/kdelibs-apidocs/kdeui/html/classKStatusNotifierItem.html
+        self.tray = KStatusNotifierItem("someId", self)
+        self.tray.setCategory(KStatusNotifierItem.ApplicationStatus)
+        self.tray.setIconByName(os.path.join(BASE_DIR, "monitor.png"))
+        self.tray.setStatus(KStatusNotifierItem.Active)
+        self.tray.setToolTipIconByName(os.path.join(BASE_DIR, "monitor.png"))
+        self.tray.setToolTipTitle("ViewShow - a screen recorder")
+        self.tray.setToolTipSubTitle("Click to start recording")
+
         screen = QtGui.QApplication.desktop().screenGeometry()
         rect = screen.adjusted(screen.width() / 4, screen.height() / 4,
-                               - screen.width() / 4, -screen.height() / 4)
+                               -screen.width() / 4, -screen.height() / 4)
         self.setGeometry(rect)
 
         self.recorder = None
@@ -50,7 +72,8 @@ class Window(QtGui.QDialog, FormClass):
             self.drag_position = event.globalPos()
             self.drag_widget_name = QtGui.QApplication.widgetAt(event.globalPos()).objectName()
 
-    def mouseMoveEvent(self, event):  # is called only when a mouse button is pressed
+    def mouseMoveEvent(self, event):
+        # is called only when a mouse button is pressed
         if event.buttons() == QtCore.Qt.LeftButton:
             event.accept()
             rect = self.geometry()
@@ -73,15 +96,7 @@ class Window(QtGui.QDialog, FormClass):
                 rect.adjust(delta.x(), 0, 0, delta.y())
             elif self.drag_widget_name == 'leftGrip':
                 rect.adjust(delta.x(), 0, 0, 0)
-            screen = QtGui.QApplication.desktop().screenGeometry()
-            if rect.top() < screen.top():
-                rect.moveTop(screen.top())
-            if rect.right() > screen.right():
-                rect.moveRight(screen.right())
-            if rect.bottom() > screen.bottom():
-                rect.moveBottom(screen.bottom())
-            if rect.left() < screen.left():
-                rect.moveLeft(screen.left())
+            keep_rect_within_screen_bounds(rect)
             self.setGeometry(rect)
             self.drag_position = event.globalPos()
 
@@ -94,7 +109,6 @@ class Window(QtGui.QDialog, FormClass):
                 self.start_recording()
             else:
                 self.setWindowState(self.windowState() ^ QtCore.Qt.WindowFullScreen)
-#                self.showMaximized()
 
     def done(self, status):
         super().done(status)
@@ -147,18 +161,20 @@ class Window(QtGui.QDialog, FormClass):
 
     def resizeEvent(self, qResizeEvent):
         # TODO: show new dimensions to user
+        print('Resize event')
         super().resizeEvent(qResizeEvent)
 
     def moveEvent(self, qResizeEvent):
         # show new position to user
+        print('Move event')
         super().moveEvent(qResizeEvent)
 
 
 if __name__ == '__main__':
 
-    appName = "ViewShow"
+    appName = "viewshow"
     catalog = ""
-    programName = ki18n("KApplication")
+    programName = ki18n("ViewShow")
     version = "0.1"
     description = ki18n("KDE screen recorder")
     license = KAboutData.License_GPL

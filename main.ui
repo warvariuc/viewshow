@@ -34,6 +34,10 @@
        <height>30</height>
       </size>
      </property>
+     <property name="toolTip">
+      <string>Drag to resize
+Double-click to maximize/restore</string>
+     </property>
      <property name="styleSheet">
       <string notr="true">QWidget {
 	background-color: rgba(32, 255, 8, 95);
@@ -60,6 +64,10 @@ QWidget:hover {
        <height>30</height>
       </size>
      </property>
+     <property name="toolTip">
+      <string>Drag to resize
+Double-click to maximize/restore</string>
+     </property>
      <property name="styleSheet">
       <string notr="true">QWidget {
 	background-color: rgba(32, 255, 8, 95);
@@ -84,6 +92,10 @@ QWidget:hover {
        <width>30</width>
        <height>30</height>
       </size>
+     </property>
+     <property name="toolTip">
+      <string>Drag to resize
+Double-click to maximize/restore</string>
      </property>
      <property name="styleSheet">
       <string notr="true">QWidget {
@@ -111,6 +123,10 @@ QWidget:hover {
        <height>0</height>
       </size>
      </property>
+     <property name="toolTip">
+      <string>Drag to resize
+Double-click to maximize/restore</string>
+     </property>
      <property name="styleSheet">
       <string notr="true">QWidget {
 	background-color: rgba(32, 255, 8, 95);
@@ -136,8 +152,17 @@ QWidget:hover {
        <height>30</height>
       </size>
      </property>
+     <property name="toolTip">
+      <string>Drag to move
+Double click to start screen recording</string>
+     </property>
      <property name="styleSheet">
-      <string notr="true">background-color: rgba(32, 255, 8, 95);</string>
+      <string notr="true">QWidget {
+	background-color: rgba(32, 255, 8, 95);
+}
+QWidget:hover {
+	background-color: rgba(255, 32, 8, 95);
+}</string>
      </property>
      <property name="text">
       <string/>
@@ -157,6 +182,10 @@ QWidget:hover {
        <width>30</width>
        <height>0</height>
       </size>
+     </property>
+     <property name="toolTip">
+      <string>Drag to resize
+Double-click to maximize/restore</string>
      </property>
      <property name="styleSheet">
       <string notr="true">QWidget {
@@ -182,6 +211,10 @@ QWidget:hover {
        <width>30</width>
        <height>30</height>
       </size>
+     </property>
+     <property name="toolTip">
+      <string>Drag to resize
+Double-click to maximize/restore</string>
      </property>
      <property name="styleSheet">
       <string notr="true">QWidget {
@@ -209,6 +242,10 @@ QWidget:hover {
        <height>30</height>
       </size>
      </property>
+     <property name="toolTip">
+      <string>Drag to resize
+Double-click to maximize/restore</string>
+     </property>
      <property name="styleSheet">
       <string notr="true">QWidget {
 	background-color: rgba(32, 255, 8, 95);
@@ -233,6 +270,10 @@ QWidget:hover {
        <width>30</width>
        <height>30</height>
       </size>
+     </property>
+     <property name="toolTip">
+      <string>Drag to resize
+Double-click to maximize/restore</string>
      </property>
      <property name="styleSheet">
       <string notr="true">QWidget {
