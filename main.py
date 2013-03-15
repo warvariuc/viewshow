@@ -105,7 +105,8 @@ class Window(QtGui.QDialog, FormClass):
             event.accept()
             widget_name = QtGui.QApplication.widgetAt(event.globalPos()).objectName()
             if widget_name == 'centerLabel':
-                self.showMinimized()  # minimize the window
+#                self.showMinimized()  # minimize the window
+                self.hide()
                 self.start_recording()
             else:
                 self.setWindowState(self.windowState() ^ QtCore.Qt.WindowFullScreen)
