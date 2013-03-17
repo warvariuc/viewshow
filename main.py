@@ -10,12 +10,12 @@ if sys.version < python_required_version:
 
 
 import os
+import datetime
 
 from PyQt4 import QtGui, QtCore, uic
 # http://api.kde.org/4.x-api/kdelibs-apidocs/kdeui/html/classKStatusNotifierItem.html
-# http://api.kde.org/4.x-api/kdelibs-apidocs/kdeui/html/classKNotification.html
-from PyKDE4.kdeui import KApplication, KStatusNotifierItem, KNotification
-from PyKDE4.kdecore import ki18n, KAboutData, KCmdLineArgs
+from PyKDE4 import kdecore, kdeui
+from PyKDE4.kdecore import ki18n
 
 import pexpect
 
@@ -57,21 +57,27 @@ class Window(QtGui.QDialog, FormClass):
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
 
         self.setupUi(self)
+        self.setWindowIcon(QtGui.QIcon(icon_path('monitor.png')))
         # workaround - aligment via designer is not working for me
         self.centerGrip.layout().setAlignment(self.quitButton, QtCore.Qt.AlignHCenter)
         self.startButton.setIcon(QtGui.QIcon(icon_path('film.png')))
         self.startButton.clicked.connect(self.start_recording)
 
-        self.tray = KStatusNotifierItem("ViewShow", self)
-        self.tray.setCategory(KStatusNotifierItem.ApplicationStatus)
-        self.tray.setStatus(KStatusNotifierItem.Active)
+        self.tray = kdeui.KStatusNotifierItem("ViewShow", self)
+        self.tray.setCategory(kdeui.KStatusNotifierItem.ApplicationStatus)
+        self.tray.setStatus(kdeui.KStatusNotifierItem.Active)
         self.tray.setToolTipTitle("ViewShow - a screen recorder")
         self.tray.activateRequested.connect(self.on_tray_activate_requested)
+
+        self.tray.contextMenu().addAction(kdeui.KStandardAction.aboutApp(
+            kdeui.KAboutApplicationDialog(None, self).show,
+            self.tray.actionCollection()
+        ))
 
         # center the window
         screen = QtGui.QApplication.desktop().screenGeometry()
         rect = screen.adjusted(screen.width() / 4, screen.height() / 4,
-                               -screen.width() / 4, -screen.height() / 4)
+                               - screen.width() / 4, -screen.height() / 4)
         self.setGeometry(rect)
 
         self.recorder = ScreenRecorder(self)
@@ -124,13 +130,22 @@ class Window(QtGui.QDialog, FormClass):
 #        KNotification.event(KNotification.Notification, 'ShowView', 'Screen recording started:\n%s'
 #                                                                    % file_name)
 
-    def on_recorder_finished(self, file_name):
+    def on_recorder_finished(self, movie_path):
         self.set_state('selecting')
-        KNotification.event(KNotification.Notification, 'Recording finished', file_name)
+        self.tray.showMessage(
+            'Recording finished',
+            'The recorded movie: <a href="%s">%s</a>' % (movie_path, os.path.basename(movie_path)),
+            icon_path('film.png')
+        )
 
     def on_recorder_failed(self, text):
         print(text)
         self.set_state('hidden')
+        self.tray.showMessage(
+            'Recording failed',
+            'The recorder process has unexpectedly stopped. The movie file might be unredable.',
+            icon_path('exclamation.png')
+        )
 
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.LeftButton:
@@ -236,6 +251,8 @@ class ScreenRecorder(QtCore.QObject):
     CMD = ('avconv -f x11grab -r {frame_rate} -s {rect_width}x{rect_height} '
            '-i :0.0+{rect_left},{rect_top} -c:v libx264 -preset ultrafast -crf 0 '
            '{movie_file_path}')
+    FRAME_RATE = 15
+    MOVIE_FILENAME_TEMPLATE = '~/screen_{timestamp:%Y-%m-%d_%H-%M-%S}_{width}x{height}.mkv'
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -276,18 +293,25 @@ class ScreenRecorder(QtCore.QObject):
 
         return rect
 
-    def start_recording(self, rect, screen_rect, frame_rate=15, filename_template='test%d.mkv'):
+    def start_recording(self, rect, screen_rect, frame_rate=0, filename_template=''):
         """Start the recording process.
         """
         rect = self.normalize_selection(rect, screen_rect)
+        frame_rate = frame_rate or self.FRAME_RATE
+        filename_template = filename_template or self.MOVIE_FILENAME_TEMPLATE
+        movie_path = filename_template.format(timestamp=datetime.datetime.now(),
+                                              width=rect.width(), height=rect.height())
+        movie_path = os.path.expanduser(movie_path)
         # detect file name
+        _movie_path = movie_path
         i = 1
         while True:
-            filename = filename_template % i
-            if not os.path.exists(filename):
+            if not os.path.exists(_movie_path):
+                movie_path = _movie_path
                 break
             i += 1
-        self.movie_file_path = filename
+            _movie_path = '%s(%d)' % (movie_path, i)
+        self.movie_file_path = movie_path
         # make the command
         cmd = self.CMD.format(
             movie_file_path=self.movie_file_path,
@@ -308,7 +332,6 @@ class ScreenRecorder(QtCore.QObject):
             return None
         if not self.recorder.isalive():
             self.timer.stop()
-            #            print(self.recorder.read())
             self.recording_failed.emit(self.recorder.read())
             self.movie_file_path = None
             self.recorder = None
@@ -332,20 +355,23 @@ if __name__ == '__main__':
     appName = "viewshow"
     catalog = ""
     programName = ki18n("ViewShow")
-    version = "0.2"
-    description = ki18n("KDE screen recorder")
-    license = KAboutData.License_GPL
+    version = "0.3"
+    description = ki18n("""\
+A KDE screen recorder.
+This application uses <a href="http://p.yusukekamiyamane.com/">Fugue Icons</a>.
+""")
+    license = kdecore.KAboutData.License_GPL
     copyright = ki18n("(c) 2013 Victor Varvariuc")
-    text = ki18n("none")
+    text = ki18n("")
     homePage = "https://github.com/warvariuc/viewshow"
     bugEmail = "victor.varvariuc@gmail.com"
 
-    aboutData = KAboutData(appName, catalog, programName, version, description,
-                           license, copyright, text, homePage, bugEmail)
+    aboutData = kdecore.KAboutData(appName, catalog, programName, version, description,
+                                   license, copyright, text, homePage, bugEmail)
 
-    KCmdLineArgs.init(sys.argv, aboutData)
+    kdecore.KCmdLineArgs.init(sys.argv, aboutData)
 
-    app = KApplication()
+    app = kdeui.KApplication()
 
     window = Window()
     window.show()
