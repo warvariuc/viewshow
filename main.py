@@ -372,6 +372,7 @@ This application uses <a href="http://p.yusukekamiyamane.com/">Fugue Icons</a>.
     kdecore.KCmdLineArgs.init(sys.argv, aboutData)
 
     app = kdeui.KApplication()
+    app.setQuitOnLastWindowClosed(False)
 
     window = Window()
     window.show()
