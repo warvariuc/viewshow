@@ -23,7 +23,7 @@ import pexpect
 QtCore.pyqtRemoveInputHook()
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-FormClass, BaseClass = uic.loadUiType('main.ui')
+FormClass, BaseClass = uic.loadUiType(os.path.join(BASE_DIR, 'main.ui'))
 assert BaseClass is QtGui.QDialog
 
 
