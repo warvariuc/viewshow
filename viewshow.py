@@ -3,7 +3,7 @@ __author__ = "Victor Varvariuc <victor.varvariuc@gmail.com>"
 
 import sys
 
-python_required_version = '3.2'  # tested with this version
+python_required_version = '3.3'  # tested with this version
 if sys.version < python_required_version:
     raise SystemExit('Bad Python version', 'Python %s or newer required (you are using %s).'
                      % (python_required_version, sys.version.split(' ')[0]))
@@ -11,6 +11,7 @@ if sys.version < python_required_version:
 
 import os
 import datetime
+import subprocess
 
 from PyQt4 import QtGui, QtCore, uic
 # http://api.kde.org/4.x-api/kdelibs-apidocs/kdeui/html/classKStatusNotifierItem.html
@@ -350,14 +351,33 @@ class ScreenRecorder(QtCore.QObject):
             self.recorder = None
 
 
+def error(title, message):
+    """Show error message dialog and exit.
+    """
+    print(title)
+    print(message)
+    subprocess.call("kdialog --title '%s' --sorry '%s'" % (title, message))
+    sys.exit(1)
+
+
 if __name__ == '__main__':
+
+    try:
+        output = subprocess.check_output('avconv -codecs', shell=True)
+    except subprocess.CalledProcessError as exc:
+        error('avconv command not found',
+              '`avconv` command not found. Please install `ffmpeg` package.')
+
+    if 'libx264' not in output.decode():
+        error('x264 codec not supported, ',
+              '`libx264` codec not supported. Please install `libavcodec-extra-*` package.')
 
     appName = "viewshow"
     catalog = ""
     programName = ki18n("ViewShow")
     version = "0.3"
     description = ki18n("""\
-A KDE screen recorder.
+A KDE screen recorder. Tested with Kubuntu 13.10. Please install ffmpeg package.
 This application uses <a href="http://p.yusukekamiyamane.com/">Fugue Icons</a>.
 """)
     license = kdecore.KAboutData.License_GPL
