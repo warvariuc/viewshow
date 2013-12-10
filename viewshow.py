@@ -184,11 +184,7 @@ class Window(FormClass, QtGui.QDialog):
     def mouseDoubleClickEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             event.accept()
-            widget_name = QtGui.QApplication.widgetAt(event.globalPos()).objectName()
-            if widget_name == 'centerGrip':
-                self.start_recording()
-            else:
-                self.setWindowState(self.windowState() ^ QtCore.Qt.WindowFullScreen)
+            self.setWindowState(self.windowState() ^ QtCore.Qt.WindowFullScreen)
 
     def done(self, status):
         super().done(status)
