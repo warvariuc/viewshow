@@ -29,7 +29,7 @@ assert BaseClass is QtGui.QDialog
 
 
 def icon_path(icon_file_name):
-    return os.path.join(BASE_DIR, icon_file_name)
+    return os.path.join(BASE_DIR, 'icons', icon_file_name)
 
 
 def adjust_rect(rect, dx1, dy1, dx2, dy2):
@@ -49,7 +49,7 @@ def adjust_rect(rect, dx1, dy1, dx2, dy2):
     return rect
 
 
-class Window(QtGui.QDialog, FormClass):
+class Window(FormClass, QtGui.QDialog):
 
     def __init__(self):
         super().__init__()
@@ -58,7 +58,7 @@ class Window(QtGui.QDialog, FormClass):
 
         self.setupUi(self)
         self.setWindowIcon(QtGui.QIcon(icon_path('monitor.png')))
-        # workaround - aligment via designer is not working for me
+        # workaround - alignment via designer is not working for me
         self.centerGrip.layout().setAlignment(self.quitButton, QtCore.Qt.AlignHCenter)
         self.startButton.setIcon(QtGui.QIcon(icon_path('film.png')))
         self.startButton.clicked.connect(self.start_recording)
