@@ -262,10 +262,17 @@ class ScreenRecorder(QtCore.QObject):
         self.movie_file_path = None  # where the video as saved to
         self.recorder = None
 
-    def check_preconditions(self):
+    @classmethod
+    def check_preconditions(cls):
         """Verify that the host system has necessary programs to run this recorder.
         """
-        raise NotImplementedError
+        try:
+            output = subprocess.check_output('avconv -codecs', shell=True)
+        except subprocess.CalledProcessError:
+            return '`avconv` command not found. Please install `ffmpeg` package.'
+
+        if 'libx264' not in output.decode():
+            return '`libx264` codec not supported. Please install `libavcodec-extra-*` package.'
 
     def is_active(self):
         """Whether the recording process is going on
@@ -361,15 +368,9 @@ def error(title, message):
 
 if __name__ == '__main__':
 
-    try:
-        output = subprocess.check_output('avconv -codecs', shell=True)
-    except subprocess.CalledProcessError as exc:
-        error('avconv command not found',
-              '`avconv` command not found. Please install `ffmpeg` package.')
-
-    if 'libx264' not in output.decode():
-        error('x264 codec not supported, ',
-              '`libx264` codec not supported. Please install `libavcodec-extra-*` package.')
+    preconditions_error = ScreenRecorder.check_preconditions()
+    if preconditions_error:
+        error('Preconditions are not satisfied', preconditions_error)
 
     appName = "viewshow"
     catalog = ""
