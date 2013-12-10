@@ -3,10 +3,10 @@ __author__ = "Victor Varvariuc <victor.varvariuc@gmail.com>"
 
 import sys
 
-python_required_version = '3.3'  # tested with this version
-if sys.version < python_required_version:
+PYTHON_REQUIRED_VERSION = '3.3'  # tested with this version
+if sys.version < PYTHON_REQUIRED_VERSION:
     raise SystemExit('Bad Python version', 'Python %s or newer required (you are using %s).'
-                     % (python_required_version, sys.version.split(' ')[0]))
+                     % (PYTHON_REQUIRED_VERSION, sys.version.split(' ')[0]))
 
 
 import os
@@ -49,7 +49,6 @@ def adjust_rect(rect, dx1, dy1, dx2, dy2):
     return rect
 
 
-
 class Window(QtGui.QDialog, FormClass):
 
     def __init__(self):
@@ -78,7 +77,7 @@ class Window(QtGui.QDialog, FormClass):
         # center the window
         screen = QtGui.QApplication.desktop().screenGeometry()
         rect = screen.adjusted(screen.width() / 4, screen.height() / 4,
-                               - screen.width() / 4, -screen.height() / 4)
+                               -screen.width() / 4, -screen.height() / 4)
         self.setGeometry(rect)
 
         self.recorder = ScreenRecorder(self)
@@ -105,8 +104,8 @@ class Window(QtGui.QDialog, FormClass):
             # the screen is being recorded, the selection window is hidden
             self.tray.setIconByName(icon_path('film.png'))
             self.tray.setToolTipIconByName(icon_path('film.png'))
-            self.tray.setToolTipSubTitle('A Screen recording is in process (%s). '
-                                         'Left click to stop.' % text)
+            self.tray.setToolTipSubTitle(
+                'A Screen recording is in process (%s). Left click to stop.' % text)
             self.hide()
         else:
             raise AssertionError('Unknown state')
@@ -127,9 +126,9 @@ class Window(QtGui.QDialog, FormClass):
         self.recorder.stop_recording()
 
     def on_recorder_started(self, file_name):
-            self.set_state('recording', file_name)
-#        KNotification.event(KNotification.Notification, 'ShowView', 'Screen recording started:\n%s'
-#                                                                    % file_name)
+        self.set_state('recording', file_name)
+        # KNotification.event(KNotification.Notification, 'ShowView',
+        #                     'Screen recording started:\n%s' % file_name)
 
     def on_recorder_finished(self, movie_path):
         self.set_state('selecting')
@@ -195,13 +194,13 @@ class Window(QtGui.QDialog, FormClass):
         super().done(status)
         self.close()
 
-    def closeEvent(self, qCloseEvent):
+    def closeEvent(self, q_close_event):
         self.stop_recording()
 
-    def keyPressEvent(self, qKeyEvent):
-        key = qKeyEvent.key()
+    def keyPressEvent(self, q_key_event):
+        key = q_key_event.key()
         rect = self.geometry()
-        if qKeyEvent.modifiers() in (QtCore.Qt.NoModifier, QtCore.Qt.KeypadModifier):
+        if q_key_event.modifiers() in (QtCore.Qt.NoModifier, QtCore.Qt.KeypadModifier):
             if key in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return):
                 self.startButton.animateClick()
                 return
@@ -217,7 +216,7 @@ class Window(QtGui.QDialog, FormClass):
             elif key == QtCore.Qt.Key_Right:
                 self.setGeometry(adjust_rect(rect, 1, 0, 1, 0))
                 return
-        elif qKeyEvent.modifiers() == QtCore.Qt.ShiftModifier:
+        elif q_key_event.modifiers() == QtCore.Qt.ShiftModifier:
             if key == QtCore.Qt.Key_Up:
                 self.setGeometry(adjust_rect(rect, 0, -1, 0, 0))
                 return
@@ -230,30 +229,30 @@ class Window(QtGui.QDialog, FormClass):
             elif key == QtCore.Qt.Key_Right:
                 self.setGeometry(adjust_rect(rect, 0, 0, 1, 0))
                 return
-        return super().keyPressEvent(qKeyEvent)
+        return super().keyPressEvent(q_key_event)
 
-    def resizeEvent(self, qResizeEvent):
+    def resizeEvent(self, q_resize_event):
         # TODO: show new dimensions to user
-        super().resizeEvent(qResizeEvent)
+        super().resizeEvent(q_resize_event)
         self.setGeometry(adjust_rect(self.geometry(), 0, 0, 0, 0))
 
-    def moveEvent(self, qResizeEvent):
+    def moveEvent(self, q_move_event):
         # TODO: show new position to user
-        super().moveEvent(qResizeEvent)
+        super().moveEvent(q_move_event)
         self.setGeometry(adjust_rect(self.geometry(), 0, 0, 0, 0))
 
 
 class ScreenRecorder(QtCore.QObject):
-
-    recording_failed = QtCore.pyqtSignal(str)
-    recording_started = QtCore.pyqtSignal(str)
-    recording_finished = QtCore.pyqtSignal(str)
 
     CMD = ('avconv -f x11grab -r {frame_rate} -s {rect_width}x{rect_height} '
            '-i :0.0+{rect_left},{rect_top} -c:v libx264 -preset ultrafast -crf 0 '
            '{movie_file_path}')
     FRAME_RATE = 15
     MOVIE_FILENAME_TEMPLATE = '~/screen_{timestamp:%Y-%m-%d_%H-%M-%S}_{width}x{height}.mkv'
+
+    recording_failed = QtCore.pyqtSignal(str)
+    recording_started = QtCore.pyqtSignal(str)
+    recording_finished = QtCore.pyqtSignal(str)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -338,13 +337,13 @@ class ScreenRecorder(QtCore.QObject):
             self.recorder = None
             return False
         else:
-        #            print('The recorder is alive!')
+            # print('The recorder is alive!')
             return True
 
     def stop_recording(self):
         if self.recorder:
             self.timer.stop()
-            #            print(self.recorder.read_nonblocking(1000, 0))
+            # print(self.recorder.read_nonblocking(1000, 0))
             self.recorder.terminate(force=True)
             self.recording_finished.emit(self.movie_file_path)
             self.movie_file_path = None
@@ -356,7 +355,7 @@ def error(title, message):
     """
     print(title)
     print(message)
-    subprocess.call("kdialog --title '%s' --sorry '%s'" % (title, message))
+    subprocess.call("kdialog --title '%s' --sorry '%s'" % (title, message), shell=True)
     sys.exit(1)
 
 
@@ -392,9 +391,9 @@ This application uses <a href="http://p.yusukekamiyamane.com/">Fugue Icons</a>.
     kdecore.KCmdLineArgs.init(sys.argv, aboutData)
 
     app = kdeui.KApplication()
-    app.setQuitOnLastWindowClosed(False)
+    # app.setQuitOnLastWindowClosed(False)
 
     window = Window()
     window.show()
 
-    sys.exit(app.exec())
+    app.exec()
