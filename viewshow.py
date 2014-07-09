@@ -192,6 +192,7 @@ class Window(FormClass, QtGui.QDialog):
 
     def closeEvent(self, q_close_event):
         self.stop_recording()
+        super().closeEvent(q_close_event)
 
     def keyPressEvent(self, q_key_event):
         key = q_key_event.key()
@@ -394,3 +395,4 @@ This application uses <a href="http://p.yusukekamiyamane.com/">Fugue Icons</a>.
     window.show()
 
     app.exec()
+    del window  # without this the app crashes
