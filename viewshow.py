@@ -265,7 +265,7 @@ class ScreenRecorder(QtCore.QObject):
         try:
             output = subprocess.check_output('avconv -codecs', shell=True)
         except subprocess.CalledProcessError:
-            return '`avconv` command not found. Please install `ffmpeg` package.'
+            return '`avconv` command not found. Please install `libav-tools` package.'
 
         if 'libx264' not in output.decode():
             return '`libx264` codec not supported. Please install `libavcodec-extra-*` package.'
