@@ -3,7 +3,7 @@ __author__ = "Victor Varvariuc <victor.varvariuc@gmail.com>"
 
 import sys
 
-PYTHON_REQUIRED_VERSION = '3.3'  # tested with this version
+PYTHON_REQUIRED_VERSION = '3.4'  # tested with this version
 if sys.version < PYTHON_REQUIRED_VERSION:
     raise SystemExit('Bad Python version', 'Python %s or newer required (you are using %s).'
                      % (PYTHON_REQUIRED_VERSION, sys.version.split(' ')[0]))
@@ -357,8 +357,7 @@ class ScreenRecorder(QtCore.QObject):
 def error(title, message):
     """Show error message dialog and exit.
     """
-    print(title)
-    print(message)
+    print(title, '\n', message)
     subprocess.call("kdialog --title '%s' --sorry '%s'" % (title, message), shell=True)
     sys.exit(1)
 
