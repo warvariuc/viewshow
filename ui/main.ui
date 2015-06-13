@@ -232,7 +232,7 @@ margin-left: 3px;
       <string>Double-click to maximize/restore</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="1">
+      <item row="0" column="1" colspan="2">
        <spacer name="verticalSpacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -245,7 +245,7 @@ margin-left: 3px;
         </property>
        </spacer>
       </item>
-      <item row="1" column="1">
+      <item row="1" column="1" colspan="2">
        <widget class="QPushButton" name="makeScreenshotButton">
         <property name="focusPolicy">
          <enum>Qt::NoFocus</enum>
@@ -256,6 +256,7 @@ margin-left: 3px;
         <property name="styleSheet">
          <string notr="true">.QPushButton {
 	padding: 15px;
+    text-align: left;
 }</string>
         </property>
         <property name="text">
@@ -286,7 +287,7 @@ margin-left: 3px;
         </property>
        </spacer>
       </item>
-      <item row="2" column="1">
+      <item row="2" column="1" colspan="2">
        <widget class="QPushButton" name="startRecordingButton">
         <property name="focusPolicy">
          <enum>Qt::NoFocus</enum>
@@ -297,6 +298,7 @@ margin-left: 3px;
         <property name="styleSheet">
          <string notr="true">.QPushButton {
 	padding: 15px;
+    text-align: left;
 }</string>
         </property>
         <property name="text">
@@ -314,7 +316,7 @@ margin-left: 3px;
         </property>
        </widget>
       </item>
-      <item row="2" column="2" rowspan="2">
+      <item row="2" column="3" rowspan="2">
        <spacer name="horizontalSpacer_2">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -328,6 +330,30 @@ margin-left: 3px;
        </spacer>
       </item>
       <item row="3" column="1">
+       <widget class="QPushButton" name="minimizeButton">
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+        <property name="toolTip">
+         <string>Minimize</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">.QPushButton {
+	padding: 5px;
+}</string>
+        </property>
+        <property name="text">
+         <string>Minimize</string>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2">
        <widget class="QPushButton" name="quitButton">
         <property name="focusPolicy">
          <enum>Qt::NoFocus</enum>
@@ -343,15 +369,19 @@ margin-left: 3px;
         <property name="text">
          <string>Quit</string>
         </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>icons/cross.png</normaloff>icons/cross.png</iconset>
+        </property>
         <property name="iconSize">
          <size>
-          <width>32</width>
-          <height>32</height>
+          <width>24</width>
+          <height>24</height>
          </size>
         </property>
        </widget>
       </item>
-      <item row="4" column="1">
+      <item row="4" column="1" colspan="2">
        <spacer name="verticalSpacer_2">
         <property name="orientation">
          <enum>Qt::Vertical</enum>

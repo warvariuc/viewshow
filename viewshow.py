@@ -64,6 +64,7 @@ class ScreenSelector(FormClass, QtGui.QDialog):
         self.tray.setStatus(kdeui.KStatusNotifierItem.Active)
         self.tray.setToolTipTitle("ViewShow - a screen recorder")
         self.tray.activateRequested.connect(self.on_tray_activate_requested)
+        self.minimizeButton.clicked.connect(lambda: self.showMinimized())
         self.quitButton.clicked.connect(self.reject)
 
         self.tray.contextMenu().addAction(kdeui.KStandardAction.aboutApp(
@@ -83,6 +84,8 @@ class ScreenSelector(FormClass, QtGui.QDialog):
         self.recorder.recording_finished.connect(self.on_recorder_finished)
 
         self.set_state('selecting')
+        self.drag_position = QtCore.QRect()
+        self.drag_widget_name = ''
 
     def set_state(self, state, text=''):
         if state == 'hidden':

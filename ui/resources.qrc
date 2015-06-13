@@ -1,7 +1,0 @@
-<RCC>
-  <qresource prefix="icons">
-    <file>icons/film.png</file>
-    <file>icons/image.png</file>
-    <file>icons/monitor.png</file>
-  </qresource>
-</RCC>
