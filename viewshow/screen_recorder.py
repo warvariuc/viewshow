@@ -31,10 +31,11 @@ class ScreenRecorder(QtCore.QObject):
 
     @classmethod
     def check_preconditions(cls):
-        """Verify that the host system has necessary programs to run this recorder.
+        """Verify that the host system has the applications required to run this recorder.
         """
         try:
-            output = subprocess.check_output('avconv -codecs', shell=True)
+            output = subprocess.check_output(
+                'avconv -codecs', shell=True, stderr=subprocess.DEVNULL)
         except subprocess.CalledProcessError:
             return '`avconv` command not found. Please install `libav-tools` package.'
 
@@ -73,19 +74,18 @@ class ScreenRecorder(QtCore.QObject):
         rect = self.normalize_selection(rect, screen_rect)
         frame_rate = frame_rate or self.FRAME_RATE
         filename_template = filename_template or self.MOVIE_FILENAME_TEMPLATE
-        movie_path = filename_template.format(timestamp=datetime.datetime.now(),
-                                              width=rect.width(), height=rect.height())
-        movie_path = os.path.expanduser(movie_path)
+        file_path = filename_template.format(
+            timestamp=datetime.datetime.now(), width=rect.width(), height=rect.height())
+        file_path = os.path.expanduser(file_path)
         # detect file name
-        _movie_path = movie_path
+        _file_path = file_path
         i = 1
         while True:
-            if not os.path.exists(_movie_path):
-                movie_path = _movie_path
+            if not os.path.exists(_file_path):
                 break
             i += 1
-            _movie_path = '%s(%d)' % (movie_path, i)
-        self.movie_file_path = movie_path
+            _file_path = '%s(%d)' % (file_path, i)
+        self.movie_file_path = _file_path
         # make the command
         cmd = self.CMD.format(
             movie_file_path=self.movie_file_path,

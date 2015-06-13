@@ -2,8 +2,6 @@
 .*
 
 # compiled python scripts
-*.pyc
-*.pyo
 __pycache__
 
 # compiled resources

@@ -11,24 +11,20 @@ if sys.version < PYTHON_REQUIRED_VERSION:
 
 import os
 import subprocess
+import time
 
-from PyQt4 import QtGui, QtCore, uic
+from PyQt4 import QtGui, QtCore
 # http://api.kde.org/4.x-api/kdelibs-apidocs/kdeui/html/classKStatusNotifierItem.html
 from PyKDE4 import kdecore, kdeui
 from PyKDE4.kdecore import ki18n
 
 from viewshow.screen_recorder import ScreenRecorder
+from viewshow.screen_shooter import ScreenShooter
+from viewshow.dropbox_client import DropboxClient
+from viewshow.utils import icon_path, load_ui_file
 
 
 QtCore.pyqtRemoveInputHook()
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-
-FormClass, BaseClass = uic.loadUiType(os.path.join(BASE_DIR, 'main.ui'))
-assert BaseClass is QtGui.QDialog
-
-
-def icon_path(icon_file_name):
-    return os.path.join(BASE_DIR, 'icons', icon_file_name)
 
 
 def adjust_rect(rect, dx1, dy1, dx2, dy2):
@@ -48,7 +44,11 @@ def adjust_rect(rect, dx1, dy1, dx2, dy2):
     return rect
 
 
-class Window(FormClass, QtGui.QDialog):
+FormClass, BaseClass = load_ui_file('main.ui')
+assert BaseClass is QtGui.QDialog
+
+
+class ScreenSelector(FormClass, QtGui.QDialog):
 
     def __init__(self):
         super().__init__()
@@ -56,17 +56,15 @@ class Window(FormClass, QtGui.QDialog):
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
 
         self.setupUi(self)
-        self.setWindowIcon(QtGui.QIcon(icon_path('monitor.png')))
-        # workaround - alignment via designer is not working for me
-        self.centerGrip.layout().setAlignment(self.quitButton, QtCore.Qt.AlignHCenter)
-        self.startButton.setIcon(QtGui.QIcon(icon_path('film.png')))
-        self.startButton.clicked.connect(self.start_recording)
+        self.startRecordingButton.clicked.connect(self.start_recording)
+        self.makeScreenshotButton.clicked.connect(self.make_screenshot)
 
         self.tray = kdeui.KStatusNotifierItem("ViewShow", self)
         self.tray.setCategory(kdeui.KStatusNotifierItem.ApplicationStatus)
         self.tray.setStatus(kdeui.KStatusNotifierItem.Active)
         self.tray.setToolTipTitle("ViewShow - a screen recorder")
         self.tray.activateRequested.connect(self.on_tray_activate_requested)
+        self.quitButton.clicked.connect(self.reject)
 
         self.tray.contextMenu().addAction(kdeui.KStandardAction.aboutApp(
             kdeui.KAboutApplicationDialog(None, self).show,
@@ -118,8 +116,8 @@ class Window(FormClass, QtGui.QDialog):
             self.set_state('hidden')
 
     def start_recording(self):
-        self.recorder.start_recording(self.geometry(),
-                                      QtGui.QApplication.desktop().screenGeometry())
+        self.recorder.start_recording(
+            self.geometry(), QtGui.QApplication.desktop().screenGeometry())
 
     def stop_recording(self):
         self.recorder.stop_recording()
@@ -197,33 +195,36 @@ class Window(FormClass, QtGui.QDialog):
         key = q_key_event.key()
         rect = self.geometry()
         if q_key_event.modifiers() in (QtCore.Qt.NoModifier, QtCore.Qt.KeypadModifier):
-            if key in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return):
-                self.startButton.animateClick()
-                return
-            elif key == QtCore.Qt.Key_Up:
+            if key == QtCore.Qt.Key_Up:
                 self.setGeometry(adjust_rect(rect, 0, -1, 0, -1))
                 return
-            elif key == QtCore.Qt.Key_Down:
+            if key == QtCore.Qt.Key_Down:
                 self.setGeometry(adjust_rect(rect, 0, 1, 0, 1))
                 return
-            elif key == QtCore.Qt.Key_Left:
+            if key == QtCore.Qt.Key_Left:
                 self.setGeometry(adjust_rect(rect, -1, 0, -1, 0))
                 return
-            elif key == QtCore.Qt.Key_Right:
+            if key == QtCore.Qt.Key_Right:
                 self.setGeometry(adjust_rect(rect, 1, 0, 1, 0))
+                return
+            if key in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return):
+                self.makeScreenshotButton.animateClick()
                 return
         elif q_key_event.modifiers() == QtCore.Qt.ShiftModifier:
             if key == QtCore.Qt.Key_Up:
                 self.setGeometry(adjust_rect(rect, 0, -1, 0, 0))
                 return
-            elif key == QtCore.Qt.Key_Down:
+            if key == QtCore.Qt.Key_Down:
                 self.setGeometry(adjust_rect(rect, 0, 0, 0, 1))
                 return
-            elif key == QtCore.Qt.Key_Left:
+            if key == QtCore.Qt.Key_Left:
                 self.setGeometry(adjust_rect(rect, -1, 0, 0, 0))
                 return
-            elif key == QtCore.Qt.Key_Right:
+            if key == QtCore.Qt.Key_Right:
                 self.setGeometry(adjust_rect(rect, 0, 0, 1, 0))
+                return
+            if key in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return):
+                self.startRecordingButton.animateClick()
                 return
         return super().keyPressEvent(q_key_event)
 
@@ -236,6 +237,34 @@ class Window(FormClass, QtGui.QDialog):
         # TODO: show new position to user
         super().moveEvent(q_move_event)
         self.setGeometry(adjust_rect(self.geometry(), 0, 0, 0, 0))
+
+    def make_screenshot(self):
+        screenshooter = ScreenShooter()
+        self.hide()
+        time.sleep(0.5)  # wait for the desktop effects to finish
+        screenshot = screenshooter.make_screenshot(self.geometry())
+        file_path = screenshooter.save_image(screenshot)
+
+        try:
+            image_url = DropboxClient().upload_image(file_path)
+        except Exception as exc:
+            QtGui.QMessageBox.critical(
+                self, 'Error', 'There was an error while trying to upload the image:\n%s', exc)
+        else:
+            clipboard = QtGui.QApplication.clipboard()
+            clipboard.setText(image_url)
+            msg_box = QtGui.QMessageBox(
+                QtGui.QMessageBox.Information, 'The image was successfully uploaded',
+                'Find the uploaded image here: <a href="%s">%s</a>\n'
+                'The URL was also copied to the clipboard' % (image_url, image_url),
+                QtGui.QMessageBox.Open | QtGui.QMessageBox.Close, self)
+            msg_box.setTextFormat(QtCore.Qt.RichText)
+            result = msg_box.exec()
+            if result == QtGui.QMessageBox.Open:
+                import webbrowser
+                webbrowser.open(image_url)
+
+        self.show()
 
 
 def error(title, message):
@@ -255,16 +284,13 @@ if __name__ == '__main__':
     appName = "viewshow"
     catalog = ""
     programName = ki18n("ViewShow")
-    version = "0.3"
-    description = ki18n("""\
-A KDE screen recorder. Tested with Kubuntu 14.10. Please install ffmpeg package.
-This application uses <a href="http://p.yusukekamiyamane.com/">Fugue Icons</a>.
-""")
+    version = "0.5"
+    description = ki18n("A KDE screen recorder.")
     license = kdecore.KAboutData.License_GPL
-    copyright = ki18n("(c) 2013 Victor Varvariuc")
+    copyright = ki18n("(c) 2015 Victor Varvaryuk")
     text = ki18n("")
     homePage = "https://github.com/warvariuc/viewshow"
-    bugEmail = "victor.varvariuc@gmail.com"
+    bugEmail = ""
 
     aboutData = kdecore.KAboutData(appName, catalog, programName, version, description,
                                    license, copyright, text, homePage, bugEmail)
@@ -274,8 +300,8 @@ This application uses <a href="http://p.yusukekamiyamane.com/">Fugue Icons</a>.
     app = kdeui.KApplication()
     # app.setQuitOnLastWindowClosed(False)
 
-    window = Window()
-    window.show()
+    screen_selector = ScreenSelector()
+    screen_selector.show()
 
     app.exec()
-    del window  # othewise the app crashes
+    del screen_selector  # othewise the app crashes
