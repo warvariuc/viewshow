@@ -1,12 +1,13 @@
 __author__ = "Victor Varvariuc <victor.varvariuc@gmail.com>"
 
-import os
 import datetime
 import subprocess
 
 from PyQt4 import QtCore
 
 import pexpect
+
+from viewshow import utils
 
 
 class ScreenRecorder(QtCore.QObject):
@@ -76,16 +77,7 @@ class ScreenRecorder(QtCore.QObject):
         filename_template = filename_template or self.MOVIE_FILENAME_TEMPLATE
         file_path = filename_template.format(
             timestamp=datetime.datetime.now(), width=rect.width(), height=rect.height())
-        file_path = os.path.expanduser(file_path)
-        # detect file name
-        _file_path = file_path
-        i = 1
-        while True:
-            if not os.path.exists(_file_path):
-                break
-            i += 1
-            _file_path = '%s(%d)' % (file_path, i)
-        self.movie_file_path = _file_path
+        self.movie_file_path = utils.find_available_path(file_path)
         # make the command
         cmd = self.CMD.format(
             movie_file_path=self.movie_file_path,

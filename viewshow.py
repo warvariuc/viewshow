@@ -21,7 +21,7 @@ from PyKDE4.kdecore import ki18n
 from viewshow.screen_recorder import ScreenRecorder
 from viewshow.screen_shooter import ScreenShooter
 from viewshow.dropbox_client import DropboxClient
-from viewshow.utils import icon_path, load_ui_file
+from viewshow.utils import icon_path, load_form
 
 
 QtCore.pyqtRemoveInputHook()
@@ -44,7 +44,7 @@ def adjust_rect(rect, dx1, dy1, dx2, dy2):
     return rect
 
 
-FormClass, BaseClass = load_ui_file('main.ui')
+FormClass, BaseClass = load_form('main.ui')
 assert BaseClass is QtGui.QDialog
 
 

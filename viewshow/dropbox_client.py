@@ -5,10 +5,10 @@ from PyQt4 import QtGui, QtCore
 
 import dropbox
 
-from viewshow.utils import icon_path, load_ui_file
+from viewshow import utils
 
 
-FormClass, BaseClass = load_ui_file('dropbox-config.ui')
+FormClass, BaseClass = utils.load_form('dropbox-config.ui')
 assert BaseClass is QtGui.QDialog
 
 
@@ -84,9 +84,8 @@ class DropboxClient():
 
     def __init__(self, config_file_path=''):
         if not config_file_path:
-            config_dir = os.environ.get('XDG_CONFIG_HOME', '$HOME/.config')
-            config_file_path = os.path.join(config_dir, 'viewshow')
-        self.config_file_path = os.path.expandvars(config_file_path)
+            config_file_path = utils.get_config_path()
+        self.config_file_path = utils.normalize_path(config_file_path)
 
         config = self._get_config()
         access_token = config['dropbox']['access_token']
@@ -94,10 +93,6 @@ class DropboxClient():
             self._update_access_token()
         else:
             self._make_client(access_token)
-        # try:
-        #     account_info = self.client.account_info()
-        # except dropbox.client.ErrorResponse as exc:
-        #     import ipdb; ipdb.set_trace()
 
     def _make_client(self, access_token):
         try:

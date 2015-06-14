@@ -10,7 +10,7 @@ def icon_path(icon_file_name):
     return os.path.join(BASE_DIR, 'ui/icons', icon_file_name)
 
 
-def load_ui_file(file_name):
+def load_form(file_name):
     FormClass, BaseClass = uic.loadUiType(os.path.join(BASE_DIR, 'ui', file_name))
 
     class FormClass(FormClass):
@@ -22,3 +22,24 @@ def load_ui_file(file_name):
             os.chdir(cwd)  # change to the previous directory
 
     return FormClass, BaseClass
+
+
+def normalize_path(path):
+    return os.path.expanduser(os.path.expandvars(path))
+
+
+def get_config_path():
+    config_dir = os.environ.get('XDG_CONFIG_HOME', '$HOME/.config')
+    config_file_path = os.path.join(config_dir, 'viewshow')
+    return config_file_path
+
+
+def find_available_path(path):
+    path, ext = os.path.splitext(normalize_path(path))
+    i = 0
+    while True:
+        _path = path + ('(%s)' % i if i else '') + ext
+        if not os.path.exists(_path):
+            break
+        i += 1
+    return _path
