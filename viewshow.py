@@ -14,17 +14,19 @@ import subprocess
 import time
 
 from PyQt4 import QtGui, QtCore
+import sip
 # http://api.kde.org/4.x-api/kdelibs-apidocs/kdeui/html/classKStatusNotifierItem.html
 from PyKDE4 import kdecore, kdeui
-from PyKDE4.kdecore import ki18n
 
 from viewshow.screen_recorder import ScreenRecorder
-from viewshow.screen_shooter import ScreenShooter
+from viewshow.screen_shooter import ScreenshotDialog
 from viewshow.dropbox_client import DropboxClient
-from viewshow.utils import icon_path, load_form
+from viewshow import utils
 
 
 QtCore.pyqtRemoveInputHook()
+# http://stackoverflow.com/questions/23565702/pyqt4-crashed-on-exit
+sip.setdestroyonexit(False)
 
 
 def adjust_rect(rect, dx1, dy1, dx2, dy2):
@@ -44,11 +46,10 @@ def adjust_rect(rect, dx1, dy1, dx2, dy2):
     return rect
 
 
-FormClass, BaseClass = load_form('main.ui')
-assert BaseClass is QtGui.QDialog
+FormClass = utils.load_form('main.ui', QtGui.QDialog)
 
 
-class ScreenSelector(FormClass, QtGui.QDialog):
+class ScreenSelector(FormClass):
 
     def __init__(self):
         super().__init__()
@@ -90,20 +91,20 @@ class ScreenSelector(FormClass, QtGui.QDialog):
     def set_state(self, state, text=''):
         if state == 'hidden':
             # the selection window is hidden
-            self.tray.setIconByName(icon_path('monitor.png'))
-            self.tray.setToolTipIconByName(icon_path('monitor.png'))
+            self.tray.setIconByName(utils.icon_path('monitor.png'))
+            self.tray.setToolTipIconByName(utils.icon_path('monitor.png'))
             self.tray.setToolTipSubTitle('Click to show')
             self.hide()
         elif state == 'selecting':
             # the selection window is shown
-            self.tray.setIconByName(icon_path('monitor.png'))
-            self.tray.setToolTipIconByName(icon_path('monitor.png'))
+            self.tray.setIconByName(utils.icon_path('monitor.png'))
+            self.tray.setToolTipIconByName(utils.icon_path('monitor.png'))
             self.tray.setToolTipSubTitle('Click to hide')
             self.show()
         elif state == 'recording':
             # the screen is being recorded, the selection window is hidden
-            self.tray.setIconByName(icon_path('film.png'))
-            self.tray.setToolTipIconByName(icon_path('film.png'))
+            self.tray.setIconByName(utils.icon_path('film.png'))
+            self.tray.setToolTipIconByName(utils.icon_path('film.png'))
             self.tray.setToolTipSubTitle(
                 'A Screen recording is in process (%s). Left click to stop.' % text)
             self.hide()
@@ -135,7 +136,7 @@ class ScreenSelector(FormClass, QtGui.QDialog):
         self.tray.showMessage(
             'Recording finished',
             'The recorded movie: <a href="%s">%s</a>' % (movie_path, os.path.basename(movie_path)),
-            icon_path('film.png')
+            utils.icon_path('film.png')
         )
 
     def on_recorder_failed(self, text):
@@ -144,7 +145,7 @@ class ScreenSelector(FormClass, QtGui.QDialog):
         self.tray.showMessage(
             'Recording failed',
             'The recorder process has unexpectedly stopped. The movie file might be unredable.',
-            icon_path('exclamation.png')
+            utils.icon_path('exclamation.png')
         )
 
     def mousePressEvent(self, event):
@@ -242,30 +243,33 @@ class ScreenSelector(FormClass, QtGui.QDialog):
         self.setGeometry(adjust_rect(self.geometry(), 0, 0, 0, 0))
 
     def make_screenshot(self):
-        screenshooter = ScreenShooter()
         self.hide()
         time.sleep(0.5)  # wait for the desktop effects to finish
-        screenshot = screenshooter.make_screenshot(self.geometry())
-        file_path = screenshooter.save_image(screenshot)
+        image = utils.make_screenshot(self.geometry())
+        image_path = utils.save_image(image)
+        screen_shooter = ScreenshotDialog(self, image_path)
+        screen_shooter.exec()
 
-        try:
-            image_url = DropboxClient().upload_image(file_path)
-        except Exception as exc:
-            QtGui.QMessageBox.critical(
-                self, 'Error', 'There was an error while trying to upload the image:\n%s', exc)
-        else:
-            clipboard = QtGui.QApplication.clipboard()
-            clipboard.setText(image_url)
-            msg_box = QtGui.QMessageBox(
-                QtGui.QMessageBox.Information, 'The image was successfully uploaded',
-                'Find the uploaded image here: <a href="%s">%s</a>\n'
-                'The URL was also copied to the clipboard' % (image_url, image_url),
-                QtGui.QMessageBox.Open | QtGui.QMessageBox.Close, self)
-            msg_box.setTextFormat(QtCore.Qt.RichText)
-            result = msg_box.exec()
-            if result == QtGui.QMessageBox.Open:
-                import webbrowser
-                webbrowser.open(image_url)
+        # file_path = screenshooter.save_image(image)
+        #
+        # try:
+        #     image_url = DropboxClient().upload_image(file_path)
+        # except Exception as exc:
+        #     QtGui.QMessageBox.critical(
+        #         self, 'Error', 'There was an error while trying to upload the image:\n%s', exc)
+        # else:
+        #     clipboard = QtGui.QApplication.clipboard()
+        #     clipboard.setText(image_url)
+        #     msg_box = QtGui.QMessageBox(
+        #         QtGui.QMessageBox.Information, 'The image was successfully uploaded',
+        #         'Find the uploaded image here: <a href="%s">%s</a>\n'
+        #         'The URL was also copied to the clipboard' % (image_url, image_url),
+        #         QtGui.QMessageBox.Open | QtGui.QMessageBox.Close, self)
+        #     msg_box.setTextFormat(QtCore.Qt.RichText)
+        #     result = msg_box.exec()
+        #     if result == QtGui.QMessageBox.Open:
+        #         import webbrowser
+        #         webbrowser.open(image_url)
 
         self.show()
 
@@ -278,33 +282,39 @@ def error(title, message):
     sys.exit(1)
 
 
+def make_about_data():
+    appName = "viewshow"
+    catalog = ""
+    programName = kdecore.ki18n("ViewShow")
+    version = "0.5"
+    description = kdecore.ki18n("A KDE screen recorder.")
+    license = kdecore.KAboutData.License_GPL
+    copyright = kdecore.ki18n("(c) 2015 Victor Varvaryuk")
+    text = kdecore.ki18n("")
+    homePage = "https://github.com/warvariuc/viewshow"
+    bugEmail = ""
+
+    global _about_data
+    _about_data = kdecore.KAboutData(appName, catalog, programName, version, description,
+                                     license, copyright, text, homePage, bugEmail)
+    return _about_data
+
+
 if __name__ == '__main__':
 
     preconditions_error = ScreenRecorder.check_preconditions()
     if preconditions_error:
         error('Preconditions are not satisfied', preconditions_error)
 
-    appName = "viewshow"
-    catalog = ""
-    programName = ki18n("ViewShow")
-    version = "0.5"
-    description = ki18n("A KDE screen recorder.")
-    license = kdecore.KAboutData.License_GPL
-    copyright = ki18n("(c) 2015 Victor Varvaryuk")
-    text = ki18n("")
-    homePage = "https://github.com/warvariuc/viewshow"
-    bugEmail = ""
-
-    aboutData = kdecore.KAboutData(appName, catalog, programName, version, description,
-                                   license, copyright, text, homePage, bugEmail)
-
-    kdecore.KCmdLineArgs.init(sys.argv, aboutData)
+    kdecore.KCmdLineArgs.init(sys.argv, make_about_data())
 
     app = kdeui.KApplication()
+    app.setOrganizationName("warvariuc")
+    app.setApplicationName("viewshow")
     # app.setQuitOnLastWindowClosed(False)
 
     screen_selector = ScreenSelector()
     screen_selector.show()
 
     app.exec()
-    del screen_selector  # othewise the app crashes
+    # del screen_selector  # othewise the app crashes
