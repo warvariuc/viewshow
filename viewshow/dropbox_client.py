@@ -1,5 +1,4 @@
 import os
-import configparser
 
 from PyQt4 import QtGui, QtCore
 
@@ -8,14 +7,13 @@ import dropbox
 from viewshow import utils
 
 
-FormClass, BaseClass = utils.load_form('dropbox-config.ui')
-assert BaseClass is QtGui.QDialog
+FormClass = utils.load_form('dropbox-config.ui', QtGui.QDialog)
 
 
-class DropboxConfigDialog(FormClass, QtGui.QDialog):
+class DropboxConfigDialog(FormClass):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
         self.setupUi(self)
         self.client = None
 
@@ -82,17 +80,22 @@ class DropboxClient():
     class Error(Exception):
         pass
 
-    def __init__(self, config_file_path=''):
-        if not config_file_path:
-            config_file_path = utils.get_config_path()
-        self.config_file_path = utils.normalize_path(config_file_path)
-
-        config = self._get_config()
-        access_token = config['dropbox']['access_token']
+    def __init__(self, parent_widget):
+        self.parent_widget = parent_widget
+        settings = QtCore.QSettings()
+        access_token = settings.value('dropbox/access_token')
         if not access_token:
             self._update_access_token()
         else:
             self._make_client(access_token)
+
+    def upload_image(self, file_path):
+        file = open(file_path, 'rb')
+        file_name = os.path.split(file_path)[1]
+        file_path = self._client_call('put_file', file_name, file, overwrite=True)['path']
+        # https://www.dropbox.com/developers/core/docs/python#DropboxClient.share
+        response = self._client_call('share', file_path)
+        return response['url']
 
     def _make_client(self, access_token):
         try:
@@ -116,30 +119,13 @@ class DropboxClient():
                     continue
                 raise self.Error(str(exc))
 
-    def _get_config(self):
-        config = configparser.ConfigParser()
-        # default configuration
-        config.read_dict({'dropbox': {'access_token': ''}})
-        config.read(self.config_file_path)
-        return config
-
     def _update_access_token(self):
-        config_dialog = DropboxConfigDialog()
+        config_dialog = DropboxConfigDialog(self.parent_widget)
         result = config_dialog.exec()
         if result != QtGui.QDialog.Accepted:  # OK was not pressed
             raise self.Error('Access token was not provided by the user')
         self.client = config_dialog.client
         access_token = self.client.session.access_token
 
-        config = self._get_config()
-        config['dropbox']['access_token'] = access_token
-        with open(self.config_file_path, 'w') as config_file:
-            config.write(config_file)
-
-    def upload_image(self, file_path):
-        file = open(file_path, 'rb')
-        file_name = os.path.split(file_path)[1]
-        file_path = self._client_call('put_file', file_name, file, overwrite=True)['path']
-        # https://www.dropbox.com/developers/core/docs/python#DropboxClient.share
-        response = self._client_call('share', file_path)
-        return response['url']
+        settings = QtCore.QSettings()
+        settings.setValue('dropbox/access_token', access_token)

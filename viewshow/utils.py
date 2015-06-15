@@ -1,6 +1,8 @@
+import datetime
 import os
+import tempfile
 
-from PyQt4 import uic
+from PyQt4 import QtCore, QtGui, uic
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -10,10 +12,11 @@ def icon_path(icon_file_name):
     return os.path.join(BASE_DIR, 'ui/icons', icon_file_name)
 
 
-def load_form(file_name):
-    FormClass, BaseClass = uic.loadUiType(os.path.join(BASE_DIR, 'ui', file_name))
+def load_form(file_name, expected_base_class):
+    form_class, base_class = uic.loadUiType(os.path.join(BASE_DIR, 'ui', file_name))
+    assert base_class is expected_base_class
 
-    class FormClass(FormClass):
+    class FormClass(base_class, form_class):
         def setupUi(self, *args, **kwargs):
             # change directory so that relative paths to icons would work
             cwd = os.getcwd()
@@ -21,7 +24,7 @@ def load_form(file_name):
             super().setupUi(*args, **kwargs)
             os.chdir(cwd)  # change to the previous directory
 
-    return FormClass, BaseClass
+    return FormClass
 
 
 def normalize_path(path):
@@ -43,3 +46,24 @@ def find_available_path(path):
             break
         i += 1
     return _path
+
+
+def make_screenshot(rect):
+    assert isinstance(rect, QtCore.QRect)
+    image = QtGui.QPixmap.grabWindow(
+        QtGui.QApplication.desktop().winId(), rect.x(), rect.y(), rect.width(), rect.height())
+    return image
+
+
+def save_image(
+        image, file_name_format='screenshot_{timestamp:%Y-%m-%d_%H-%M-%S}_{width}x{height}',
+        directory='', image_format='png'):
+    assert isinstance(image, QtGui.QPixmap)
+    if not directory:
+        directory = tempfile.gettempdir()
+    file_name = file_name_format.format(
+        timestamp=datetime.datetime.now(), width=image.width(), height=image.height()
+    ) + '.' + image_format
+    file_path = find_available_path(os.path.join(directory, file_name))
+    image.save(file_path, image_format)
+    return file_path
