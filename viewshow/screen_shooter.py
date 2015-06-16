@@ -1,5 +1,7 @@
 __author__ = "Victor Varvariuc <victor.varvariuc@gmail.com>"
 
+import os
+
 from PyQt4 import QtCore, QtGui
 from PyKDE4 import kdecore, kdeui, kio
 
@@ -12,8 +14,11 @@ FormClass = utils.load_form('screenshot.ui', QtGui.QDialog)
 
 class ScreenshotDialog(FormClass):
 
-    OPEN_WITH_DEFAULT_ACTION_SETTING_NAME = 'screenshot/open-with-default-action'
-    SEND_TO_DEFAULT_ACTION_SETTING_NAME = 'screenshot/send-to-default-action'
+    SETTINGS = {
+        'OPEN_WITH_DEFAULT_ACTION': 'screenshot/open-with-default-action',
+        'SEND_TO_DEFAULT_ACTION': 'screenshot/send-to-default-action',
+        'LAST_SAVE_PATH': 'screenshot/last-save-path',
+    }
 
     def __init__(self, parent_widget, image_path):
         super().__init__(parent_widget)
@@ -41,7 +46,7 @@ class ScreenshotDialog(FormClass):
         self.openWithButton.setMenu(menu)
 
         settings = QtCore.QSettings()
-        default_action_name = settings.value(self.OPEN_WITH_DEFAULT_ACTION_SETTING_NAME)
+        default_action_name = settings.value(self.SETTINGS['OPEN_WITH_DEFAULT_ACTION'])
         for action in menu.actions():
             if action.service.name() == default_action_name:
                 break
@@ -67,6 +72,8 @@ class ScreenshotDialog(FormClass):
         else:
             self.openWithButton.setDefaultAction(action)
         kio.KRun.run(service, url_list, self)
+        QtCore.QSettings().setValue(self.SETTINGS['OPEN_WITH_DEFAULT_ACTION'],
+                                    self.openWithButton.defaultAction().service.name())
 
     def setup_sendToButton(self):
         menu = QtGui.QMenu(self)
@@ -78,7 +85,7 @@ class ScreenshotDialog(FormClass):
         self.sendToButton.setMenu(menu)
 
         settings = QtCore.QSettings()
-        default_action_name = settings.value(self.SEND_TO_DEFAULT_ACTION_SETTING_NAME)
+        default_action_name = settings.value(self.SETTINGS['SEND_TO_DEFAULT_ACTION'])
         for action in menu.actions():
             if action.service.name() == default_action_name:
                 break
@@ -109,6 +116,8 @@ class ScreenshotDialog(FormClass):
         if result == QtGui.QMessageBox.Open:
             import webbrowser
             webbrowser.open(image_url)
+        QtCore.QSettings().setValue(self.SETTINGS['SEND_TO_DEFAULT_ACTION'],
+                                    self.sendToButton.defaultAction().service.name())
 
     @QtCore.pyqtSlot()
     def on_copyButton_clicked(self):
@@ -122,13 +131,20 @@ class ScreenshotDialog(FormClass):
         image.load(self.image_path)
         self.imageLabel.setPixmap(image)
 
-    def done(self, result):
-        settings = QtCore.QSettings()
-        settings.setValue(self.OPEN_WITH_DEFAULT_ACTION_SETTING_NAME,
-                          self.openWithButton.defaultAction().service.name())
-        settings.setValue(self.SEND_TO_DEFAULT_ACTION_SETTING_NAME,
-                          self.sendToButton.defaultAction().service.name())
-        return super().done(result)
+    @QtCore.pyqtSlot()
+    def on_saveAsButton_clicked(self):
+        save_dir = os.path.dirname(QtCore.QSettings().value(self.SETTINGS['LAST_SAVE_PATH'], ''))
+        if save_dir:
+            file_path = os.path.join(save_dir, os.path.split(self.image_path)[1])
+        else:
+            file_path = self.image_path
+        file_path = QtGui.QFileDialog.getSaveFileName(
+            self, "Save screenshot", file_path, "PNG image (*.png)")
+        if not file_path:
+            return
+        self.imageLabel.pixmap().save(file_path)
+        self.image_path = file_path
+        QtCore.QSettings().setValue(self.SETTINGS['LAST_SAVE_PATH'], self.image_path)
 
 
 class KServiceAction(QtGui.QAction):

@@ -37,7 +37,7 @@ def get_config_path():
     return config_file_path
 
 
-def find_available_path(path):
+def auto_increment_file_name(path):
     path, ext = os.path.splitext(normalize_path(path))
     i = 0
     while True:
@@ -64,6 +64,6 @@ def save_image(
     file_name = file_name_format.format(
         timestamp=datetime.datetime.now(), width=image.width(), height=image.height()
     ) + '.' + image_format
-    file_path = find_available_path(os.path.join(directory, file_name))
+    file_path = auto_increment_file_name(os.path.join(directory, file_name))
     image.save(file_path, image_format)
     return file_path

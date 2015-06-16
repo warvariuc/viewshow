@@ -77,7 +77,7 @@ class ScreenRecorder(QtCore.QObject):
         filename_template = filename_template or self.MOVIE_FILENAME_TEMPLATE
         file_path = filename_template.format(
             timestamp=datetime.datetime.now(), width=rect.width(), height=rect.height())
-        self.movie_file_path = utils.find_available_path(file_path)
+        self.movie_file_path = utils.auto_increment_file_name(file_path)
         # make the command
         cmd = self.CMD.format(
             movie_file_path=self.movie_file_path,
