@@ -94,7 +94,7 @@ class DropboxClient():
         file_name = os.path.split(file_path)[1]
         file_path = self._client_call('put_file', file_name, file, overwrite=True)['path']
         # https://www.dropbox.com/developers/core/docs/python#DropboxClient.share
-        response = self._client_call('share', file_path)
+        response = self._client_call('share', file_path, short_url=False)
         return response['url']
 
     def _make_client(self, access_token):
