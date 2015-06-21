@@ -1,6 +1,4 @@
-import datetime
 import os
-import tempfile
 
 from PyQt4 import QtCore, QtGui, uic
 
@@ -48,22 +46,18 @@ def auto_increment_file_name(path):
     return _path
 
 
-def make_screenshot(rect):
+def adjust_rect(rect, dx1, dy1, dx2, dy2):
+    """Return an adjusted rect within screen bounds
+    """
     assert isinstance(rect, QtCore.QRect)
-    image = QtGui.QPixmap.grabWindow(
-        QtGui.QApplication.desktop().winId(), rect.x(), rect.y(), rect.width(), rect.height())
-    return image
-
-
-def save_image(
-        image, file_name_format='screenshot_{timestamp:%Y-%m-%d_%H-%M-%S}_{width}x{height}',
-        directory='', image_format='png'):
-    assert isinstance(image, QtGui.QPixmap)
-    if not directory:
-        directory = tempfile.gettempdir()
-    file_name = file_name_format.format(
-        timestamp=datetime.datetime.now(), width=image.width(), height=image.height()
-    ) + '.' + image_format
-    file_path = auto_increment_file_name(os.path.join(directory, file_name))
-    image.save(file_path, image_format)
-    return file_path
+    rect = rect.adjusted(dx1, dy1, dx2, dy2)
+    screen = QtGui.QApplication.desktop().screenGeometry()
+    if rect.top() < screen.top():
+        rect.moveTop(screen.top())
+    if rect.right() > screen.right():
+        rect.moveRight(screen.right())
+    if rect.bottom() > screen.bottom():
+        rect.moveBottom(screen.bottom())
+    if rect.left() < screen.left():
+        rect.moveLeft(screen.left())
+    return rect

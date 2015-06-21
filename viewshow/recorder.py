@@ -3,7 +3,7 @@ __author__ = "Victor Varvariuc <victor.varvariuc@gmail.com>"
 import datetime
 import subprocess
 
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 
 import pexpect
 
@@ -29,19 +29,24 @@ class ScreenRecorder(QtCore.QObject):
         self.timer.timeout.connect(self.check_recorder_status)
         self.movie_file_path = None  # where the video as saved to
         self.recorder = None
+        self.check_preconditions()
 
-    @classmethod
-    def check_preconditions(cls):
+    def check_preconditions(self):
         """Verify that the host system has the applications required to run this recorder.
         """
         try:
             output = subprocess.check_output(
                 'avconv -codecs', shell=True, stderr=subprocess.DEVNULL)
         except subprocess.CalledProcessError:
-            return '`avconv` command not found. Please install `libav-tools` package.'
+            QtGui.QMessageBox.warning(
+                self, 'Warning',
+                '`avconv` command not found. Please install `libav-tools` package.')
+            return
 
         if 'libx264' not in output.decode():
-            return '`libx264` codec not supported. Please install `libavcodec-extra-*` package.'
+            QtGui.QMessageBox.warning(
+                self, 'Warning',
+                '`libx264` codec not supported. Please install `libavcodec-extra-*` package.')
 
     def is_active(self):
         """Whether the recording process is going on
