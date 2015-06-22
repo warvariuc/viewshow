@@ -76,14 +76,14 @@ class DropboxConfigDialog(FormClass):
         return super().done(result)
 
 
-class DropboxClient():
+class DropboxClient(QtCore.QObject):
     """
     """
     class Error(Exception):
         pass
 
-    def __init__(self, parent_widget):
-        self.parent_widget = parent_widget
+    def __init__(self, *args):
+        super().__init__(*args)
         settings = QtCore.QSettings()
         access_token = settings.value('dropbox/access_token')
         if not access_token:
@@ -122,7 +122,7 @@ class DropboxClient():
                 raise self.Error(str(exc))
 
     def _update_access_token(self):
-        config_dialog = DropboxConfigDialog(self.parent_widget)
+        config_dialog = DropboxConfigDialog(self.parent())
         result = config_dialog.exec()
         if result != QtGui.QDialog.Accepted:  # OK was not pressed
             raise self.Error('Access token was not provided by the user')

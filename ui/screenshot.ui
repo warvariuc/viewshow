@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Screenshot</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>icons/image.png</normaloff>icons/image.png</iconset>
+  </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="margin">
     <number>4</number>

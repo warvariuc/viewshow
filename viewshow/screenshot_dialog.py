@@ -57,7 +57,8 @@ class ScreenshotDialog(FormClass):
         settings = QtCore.QSettings()
         default_action_name = settings.value(self.SETTINGS['OPEN_WITH_DEFAULT_ACTION'])
         for action in menu.actions():
-            if action.service.name() == default_action_name:
+            if (isinstance(action, KServiceAction) and action.service is not None
+                    and action.service.name() == default_action_name):
                 break
         else:
             action = menu.actions()[0]
