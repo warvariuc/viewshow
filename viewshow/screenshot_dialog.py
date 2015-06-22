@@ -27,11 +27,11 @@ class ScreenshotDialog(FormClass):
         'LAST_SAVE_PATH': 'screenshot/last-save-path',
     }
 
-    def __init__(self, parent_widget, image):
+    def __init__(self, *args, image):
         assert isinstance(image, screenshot.Screenshot)
         self.image = image
 
-        super().__init__(parent_widget)
+        super().__init__(*args)
         self.setupUi(self)
 
         self.file_watcher = QtCore.QFileSystemWatcher()
@@ -47,10 +47,11 @@ class ScreenshotDialog(FormClass):
         services = kdecore.KMimeTypeTrader.self().query('image/png')
         for service in services:
             menu.addAction(KServiceAction(
-                service, kdeui.KIcon(service.icon()), service.name().replace('&', '&&'), self))
+                kdeui.KIcon(service.icon()), service.name().replace('&', '&&'), self,
+                service=service))
         menu.addSeparator()
         menu.addAction(KServiceAction(
-            None, kdeui.KIcon(), kdecore.i18n('Other Application...'), self))
+            kdeui.KIcon(), kdecore.i18n('Other Application...'), self, service=None))
         self.openWithButton.setMenu(menu)
 
         settings = QtCore.QSettings()
@@ -89,7 +90,8 @@ class ScreenshotDialog(FormClass):
         services = [kdecore.KService('Dropbox', '', '')]
         for service in services:
             menu.addAction(KServiceAction(
-                service, kdeui.KIcon(service.icon()), service.name().replace('&', '&&'), self))
+                kdeui.KIcon(service.icon()), service.name().replace('&', '&&'), self,
+                service=service))
         self.sendToButton.setMenu(menu)
 
         settings = QtCore.QSettings()
@@ -164,6 +166,6 @@ class ScreenshotDialog(FormClass):
 class KServiceAction(QtGui.QAction):
     """Action with a related service.
     """
-    def __init__(self, service, icon, text, parent):
-        super().__init__(icon, text, parent)
+    def __init__(self, *args, service):
+        super().__init__(*args)
         self.service = service

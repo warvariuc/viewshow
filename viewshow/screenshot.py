@@ -12,10 +12,10 @@ from viewshow import utils
 class Screenshot(QtGui.QPixmap):
     """Pixmap with creation date-time.
     """
-    def __init__(self, timestamp=None):
+    def __init__(self, *args, timestamp=None):
         self.timestamp = timestamp or datetime.datetime.now()
         self.path = None
-        super().__init__()
+        super().__init__(*args)
 
     @classmethod
     def make(cls, rect=None):
@@ -26,9 +26,8 @@ class Screenshot(QtGui.QPixmap):
             rect = desktop_widget.geometry()
         image = cls.grabWindow(
             desktop_widget.winId(), rect.x(), rect.y(), rect.width(), rect.height())
-        # http://stackoverflow.com/questions/30966200/casting-a-qobject-subclass-instance/30967854#30967854
-        image.__class__ = cls
-        # image = cls(image)
+        # http://stackoverflow.com/questions/30966200/casting-a-qobject-subclass-instance
+        image = cls(image)
         image.save()
         return image
 

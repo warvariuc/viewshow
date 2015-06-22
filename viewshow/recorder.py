@@ -22,8 +22,8 @@ class ScreenRecorder(QtCore.QObject):
     recording_started = QtCore.pyqtSignal(str)
     recording_finished = QtCore.pyqtSignal(str)
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.timer = QtCore.QTimer(self)
         self.timer.setInterval(1000)  # once per second
         self.timer.timeout.connect(self.check_recorder_status)

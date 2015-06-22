@@ -1,3 +1,5 @@
+__author__ = "Victor Varvariuc <victor.varvariuc@gmail.com>"
+
 import os
 
 from PyQt4 import QtGui, QtCore
@@ -12,8 +14,8 @@ FormClass = utils.load_form('dropbox-config.ui', QtGui.QDialog)
 
 class DropboxConfigDialog(FormClass):
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.setupUi(self)
         self.client = None
 

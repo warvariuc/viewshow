@@ -63,7 +63,7 @@ if __name__ == '__main__':
     image = screenshot.Screenshot.make()
 
     from viewshow import selector
-    screen_selector_dialog = selector.ScreenSelectorDialog(image)
+    screen_selector_dialog = selector.ScreenSelectorDialog(image=image)
     screen_selector_dialog.show()
 
     app.exec()

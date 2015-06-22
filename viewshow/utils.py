@@ -1,3 +1,5 @@
+__author__ = "Victor Varvariuc <victor.varvariuc@gmail.com>"
+
 import os
 
 from PyQt4 import QtCore, QtGui, uic

@@ -1,3 +1,5 @@
+__author__ = "Victor Varvariuc <victor.varvariuc@gmail.com>"
+
 import os
 import time
 
@@ -15,8 +17,8 @@ FormClass = utils.load_form('main.ui', QtGui.QDialog)
 
 class ScreenSelectorDialog(FormClass):
 
-    def __init__(self, image=None):
-        super().__init__()
+    def __init__(self, *args, image=None):
+        super().__init__(*args)
         self.setupUi()
 
         self.startRecordingButton.clicked.connect(self.start_recording)
@@ -63,7 +65,7 @@ class ScreenSelectorDialog(FormClass):
         if image is None:
             time.sleep(0.5)  # wait for the desktop effects to finish
             image = screenshot.Screenshot.make(self.geometry())
-        screenshot_dialog = ScreenshotDialog(None, image)
+        screenshot_dialog = ScreenshotDialog(image=image)
         screenshot_dialog.exec()
         self.show()
 
