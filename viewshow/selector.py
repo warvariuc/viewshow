@@ -13,9 +13,7 @@ from viewshow import screenshot
 from viewshow.screenshot_dialog import ScreenshotDialog
 
 
-FormClass = utils.load_form('main.ui', QtGui.QDialog)
-
-class ScreenSelectorDialog(FormClass):
+class ScreenSelectorDialog(utils.load_form('main.ui', QtGui.QDialog)):
 
     def __init__(self, *args, image=None):
         super().__init__(*args)
@@ -41,6 +39,10 @@ class ScreenSelectorDialog(FormClass):
         self.recorder.recording_started.connect(self.on_recorder_started)
         self.recorder.recording_failed.connect(self.on_recorder_failed)
         self.recorder.recording_finished.connect(self.on_recorder_finished)
+        recorder_error = self.recorder.check_preconditions()
+        if recorder_error:
+            self.startRecordingButton.setEnabled(False)
+            QtGui.QMessageBox.warning(self, 'Recorder precondition error', recorder_error)
 
         self.set_state('selecting')
         self.drag_position = QtCore.QRect()
@@ -57,7 +59,9 @@ class ScreenSelectorDialog(FormClass):
         screen = QtGui.QApplication.desktop().screenGeometry()
         rect = screen.adjusted(screen.width() / 4, screen.height() / 4,
                                -screen.width() / 4, -screen.height() / 4)
-        self.setGeometry(rect)
+        # self.setGeometry(rect)
+        self.setGeometry(screen)
+        # self.showMaximized()
 
     @QtCore.pyqtSlot()
     def make_screenshot(self, image=None):

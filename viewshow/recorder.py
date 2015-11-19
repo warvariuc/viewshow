@@ -12,7 +12,7 @@ from viewshow import utils
 
 class ScreenRecorder(QtCore.QObject):
 
-    CMD = ('avconv -f x11grab -r {frame_rate} -s {rect_width}x{rect_height} '
+    CMD = ('ffmpeg -f x11grab -r {frame_rate} -s {rect_width}x{rect_height} '
            '-i :0.0+{rect_left},{rect_top} -c:v libx264 -preset ultrafast -crf 0 '
            '{movie_file_path}')
     FRAME_RATE = 15
@@ -29,24 +29,19 @@ class ScreenRecorder(QtCore.QObject):
         self.timer.timeout.connect(self.check_recorder_status)
         self.movie_file_path = None  # where the video as saved to
         self.recorder = None
-        self.check_preconditions()
 
-    def check_preconditions(self):
+    @classmethod
+    def check_preconditions(cls):
         """Verify that the host system has the applications required to run this recorder.
         """
         try:
             output = subprocess.check_output(
-                'avconv -codecs', shell=True, stderr=subprocess.DEVNULL)
+                'ffmpeg -codecs', shell=True, stderr=subprocess.DEVNULL)
         except subprocess.CalledProcessError:
-            QtGui.QMessageBox.warning(
-                self, 'Warning',
-                '`avconv` command not found. Please install `libav-tools` package.')
-            return
+            return '`ffmpeg` command not found. Please install `ffmpeg` package.'
 
         if 'libx264' not in output.decode():
-            QtGui.QMessageBox.warning(
-                self, 'Warning',
-                '`libx264` codec not supported. Please install `libavcodec-extra-*` package.')
+            return '`libx264` codec not supported. Please install `libavcodec-extra` package.'
 
     def is_active(self):
         """Whether the recording process is going on

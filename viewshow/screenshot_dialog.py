@@ -16,10 +16,7 @@ class ImageLabel(QtGui.QLabel):
         self.parent().update_image_label()
 
 
-FormClass = utils.load_form('screenshot.ui', QtGui.QDialog)
-
-
-class ScreenshotDialog(FormClass):
+class ScreenshotDialog(utils.load_form('screenshot.ui', QtGui.QDialog)):
 
     SETTINGS = {
         'OPEN_WITH_DEFAULT_ACTION': 'screenshot/open-with-default-action',
@@ -88,7 +85,8 @@ class ScreenshotDialog(FormClass):
     def setup_sendToButton(self):
         menu = QtGui.QMenu(self)
         menu.triggered.connect(self.on_sendToButton_action_triggered)
-        services = [kdecore.KService('Dropbox', '', '')]
+        services = [kdecore.KService('Dropbox', '', utils.icon_path('dropbox.png'))]
+
         for service in services:
             menu.addAction(KServiceAction(
                 kdeui.KIcon(service.icon()), service.name().replace('&', '&&'), self,
@@ -133,7 +131,7 @@ class ScreenshotDialog(FormClass):
     @QtCore.pyqtSlot()
     def on_copyButton_clicked(self):
         clipboard = QtGui.QApplication.clipboard()
-        clipboard.setPixmap(self.imageLabel.pixmap())
+        clipboard.setPixmap(self.image)
 
     def on_image_file_changed(self):
         if self.image.path not in self.file_watcher.files():
@@ -159,7 +157,7 @@ class ScreenshotDialog(FormClass):
             self, "Save screenshot", file_path, "PNG image (*.png)")
         if not file_path:
             return
-        self.imageLabel.pixmap().save(file_path)
+        self.image.save(file_path)
         self.image.path = file_path
         QtCore.QSettings().setValue(self.SETTINGS['LAST_SAVE_PATH'], self.image.path)
 

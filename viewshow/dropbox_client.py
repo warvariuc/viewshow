@@ -9,10 +9,7 @@ import dropbox
 from viewshow import utils
 
 
-FormClass = utils.load_form('dropbox-config.ui', QtGui.QDialog)
-
-
-class DropboxConfigDialog(FormClass):
+class DropboxConfigDialog(utils.load_form('dropbox-config.ui', QtGui.QDialog)):
 
     def __init__(self, *args):
         super().__init__(*args)
